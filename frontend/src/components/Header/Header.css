@@ -1,0 +1,26 @@
+.header {
+    margin: 0;
+    padding: 30px;
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.header__logo {
+    text-decoration: none;
+    color: #000;
+    background-image: url('../../images/logo.png');
+    background-size: cover;
+    background-repeat: no-repeat;
+    width: 600px;
+    height: 200px;
+    display: block;
+    outline: none;
+    background-size: contain;
+}
+
+@media screen and (max-width: 525px) {
+    .header__logo {
+        width: 300px;
+        height: 100px;
+    }
+}
