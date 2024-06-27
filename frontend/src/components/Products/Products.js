@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Table, Button, Form } from 'react-bootstrap';
 import './Products.css';
-import Table from 'react-bootstrap/Table';
-import Button from 'react-bootstrap/Button';
-import Form from 'react-bootstrap/Form';
 
 function Products({ searchResults, addToCart, cart }) {
     const [quantities, setQuantities] = useState({});
@@ -16,15 +14,51 @@ function Products({ searchResults, addToCart, cart }) {
         setAddedToCart(cartMap);
     }, [cart]);
 
-    const handleQuantityChange = (index, value) => {
+    const handleQuantityChange = useCallback((index, value) => {
         setQuantities(prev => ({ ...prev, [index]: value }));
-    };
+    }, []);
 
-    const handleAddToCart = (product, index) => {
+    const handleAddToCart = useCallback((product, index) => {
         const quantity = quantities[index] || 1;
-        addToCart({ ...product, quantity: parseInt(quantity) });
+        addToCart({ ...product, quantity: parseInt(quantity, 10) });
         setAddedToCart(prev => ({ ...prev, [product[1]]: true }));
-    };
+    }, [quantities, addToCart]);
+
+    const renderTableCell = useCallback((content, center = true) => (
+        <td>
+            <div className={`d-flex ${center ? 'justify-content-center' : ''} align-items-center h-100`}>
+                {content}
+            </div>
+        </td>
+    ), []);
+
+    const renderProductRow = useCallback((product, index) => (
+        <tr key={index}>
+            <td>{product[0]}</td>
+            <td>{product[1]}</td>
+            <td>{product[2]}</td>
+            {renderTableCell(product[3])}
+            {renderTableCell(`${product[4]} ₽`)}
+            {renderTableCell(
+                <Form.Control
+                    type="number"
+                    min="1"
+                    value={quantities[index] || 1}
+                    onChange={(e) => handleQuantityChange(index, e.target.value)}
+                    style={{ width: '70px' }}
+                />
+            )}
+            {renderTableCell(
+                <Button
+                    variant={addedToCart[product[1]] ? "success" : "primary"}
+                    onClick={() => handleAddToCart(product, index)}
+                    disabled={addedToCart[product[1]]}
+                >
+                    {addedToCart[product[1]] ? "✔" : "+"}
+                </Button>
+            )}
+        </tr>
+    ), [quantities, addedToCart, handleQuantityChange, handleAddToCart, renderTableCell]);
 
     return (
         <section className='products'>
@@ -41,47 +75,11 @@ function Products({ searchResults, addToCart, cart }) {
                 </tr>
                 </thead>
                 <tbody>
-                {(searchResults && searchResults.length > 0) ? (
-                    searchResults.map((product, index) => (
-                        <tr key={index}>
-                            <td>{product[0]}</td>
-                            <td>{product[1]}</td>
-                            <td>{product[2]}</td>
-                            <td>
-                                <div className="d-flex justify-content-center align-items-center" style={{height: '100%'}}>
-                                    {product[3]}
-                                </div>
-                            </td>
-                            <td>
-                                <div className="d-flex justify-content-center align-items-center" style={{height: '100%'}}>
-                                    {product[4]} &#8381;
-                                </div>
-                            </td>
-                            <td><div className="d-flex justify-content-center align-items-center" style={{height: '100%'}}>
-                                <Form.Control
-                                    type="number"
-                                    min="1"
-                                    value={quantities[index] || 1}
-                                    onChange={(e) => handleQuantityChange(index, e.target.value)}
-                                    style={{ width: '70px' }}
-                                /></div>
-                            </td>
-                            <td>
-                                <div className="d-flex justify-content-center align-items-center" style={{height: '100%'}}>
-                                <Button
-                                    variant={addedToCart[product[1]] ? "success" : "primary"}
-                                    onClick={() => handleAddToCart(product, index)}
-                                    disabled={addedToCart[product[1]]}
-                                >
-                                    {addedToCart[product[1]] ? "✔" : "+"}
-                                </Button>
-                                </div>
-                            </td>
-                        </tr>
-                    ))
+                {searchResults && searchResults.length > 0 ? (
+                    searchResults.map(renderProductRow)
                 ) : (
                     <tr>
-                        <td colSpan="7">Ничего не нашли? Напишите <a href='https://web.whatsapp.com/' target='_blank'>нам</a></td>
+                        <td colSpan="7">Ничего не нашли? Напишите <a href='https://web.whatsapp.com/' target='_blank' rel="noopener noreferrer">нам</a></td>
                     </tr>
                 )}
                 </tbody>

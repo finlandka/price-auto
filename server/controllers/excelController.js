@@ -5,9 +5,8 @@ require('lunr-languages/lunr.ru')(lunr);
 require('lunr-languages/lunr.multi')(lunr);
 
 function createIndex(documents) {
-    const index = lunr(function() {
+    return lunr(function() {
         this.use(lunr.multiLanguage('en', 'ru'));
-
         this.field('brand');
         this.field('article');
         this.field('name');
@@ -22,44 +21,36 @@ function createIndex(documents) {
             });
         });
     });
-
-    return index;
 }
+
+const roundNumber = (value) => {
+    const numValue = parseFloat(value);
+    return isNaN(numValue) ? value : Math.round(numValue);
+};
 
 const saveExcelData = async (req, res) => {
     try {
         const { data, fileName, priceListName } = req.body;
 
-        const roundedData = data.map((row, rowIndex) => {
-            if (rowIndex === 0) {
-                return row;
-            }
-            return row.map((cell, index) => {
-                if (index === 1) {
-                    return cell;
-                } else if (index === 4) {
-                    return isNaN(cell) ? cell : Math.round(Number(cell));
-                } else if (typeof cell === 'string') {
-                    const numValue = parseFloat(cell);
-                    return isNaN(numValue) ? cell : Math.round(numValue);
-                }
-                return cell;
-            });
-        });
+        const roundedData = data.map((row, rowIndex) =>
+            rowIndex === 0 ? row : row.map((cell, index) =>
+                index === 1 ? cell : roundNumber(cell)
+            )
+        );
 
         const excelData = new ExcelData({
             name: priceListName,
-            fileName: fileName,
+            fileName,
             data: roundedData
         });
 
         await excelData.save();
-
         res.status(201).json({ message: 'Данные успешно сохранены' });
     } catch (error) {
+        console.error('Error saving Excel data:', error);
         res.status(500).json({ message: 'Ошибка при сохранении данных' });
     }
-}
+};
 
 const searchProduct = async (req, res) => {
     try {
@@ -69,33 +60,22 @@ const searchProduct = async (req, res) => {
             return res.json({ products: [] });
         }
 
-
         const allPriceLists = await ExcelData.find({});
-
-        let allProducts = [];
-
-        for (const priceList of allPriceLists) {
+        const allProducts = allPriceLists.flatMap(priceList => {
             if (!Array.isArray(priceList.data) || priceList.data.length === 0) {
                 console.warn('Price list data is not an array:', priceList.name);
-                continue;
+                return [];
             }
 
             const index = createIndex(priceList.data);
-
             const searchResults = index.search(query);
 
-            const products = searchResults.map(result => {
-                const product = priceList.data[result.ref];
-                return {
-                    ...product,
-                    priceListName: priceList.name,
-                    priceListId: priceList._id
-                };
-            });
-
-            allProducts = allProducts.concat(products);
-
-        }
+            return searchResults.map(result => ({
+                ...priceList.data[result.ref],
+                priceListName: priceList.name,
+                priceListId: priceList._id
+            }));
+        });
 
         if (allProducts.length > 0) {
             res.json({ products: allProducts });
@@ -103,9 +83,10 @@ const searchProduct = async (req, res) => {
             res.status(404).json({ message: 'Не найдено' });
         }
     } catch (error) {
+        console.error('Error searching product:', error);
         res.status(500).json({ message: 'Internal server error', error: error.message });
     }
-}
+};
 
 module.exports = {
     saveExcelData,

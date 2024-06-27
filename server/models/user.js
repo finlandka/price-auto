@@ -6,8 +6,10 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true,
+        lowercase: true,
+        trim: true,
         validate: {
-            validator: (v) => /[\w-]+@[\w-]*\.[a-z]*/.test(v),
+            validator: (v) => /^[\w-]+@[\w-]+\.[a-z]+$/.test(v),
             message: 'Некорректный email',
         },
     },
@@ -16,41 +18,41 @@ const userSchema = new mongoose.Schema({
         required: true,
         select: false,
     },
-}, { versionKey: false });
+}, {
+    versionKey: false,
+    timestamps: true
+});
 
-userSchema.statics.findUserByCredentials = function findUserByCredentials(email, password) {
-    return this.findOne({ email }).select('+password')
-        .then((user) => {
-            if (!user) {
-                throw new Error ('Неправильные почта или пароль');
-            }
-            return bcrypt.compare(password, user.password)
-                .then((matched) => {
-                    if (!matched) {
-                        throw new Error ('Неправильные почта или пароль');
-                    }
-                    return user;
-                });
-        });
+userSchema.statics.findUserByCredentials = async function(email, password) {
+    const user = await this.findOne({ email }).select('+password');
+    if (!user) {
+        throw new Error('Неправильные почта или пароль');
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+        throw new Error('Неправильные почта или пароль');
+    }
+    return user;
 };
 
-// Метод для создания пользователя
 userSchema.statics.createUser = async function(email, password) {
-    // Хешируем пароль
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Создаем нового пользователя
-    const user = new this({
-        email: email,
-        password: hashedPassword
-    });
-
-    // Сохраняем пользователя в базе данных
+    const user = new this({ email, password: hashedPassword });
     await user.save();
 
-    // Возвращаем созданного пользователя (без пароля)
     return this.findById(user._id);
 };
 
-module.exports = mongoose.model('user', userSchema);
+userSchema.methods.comparePassword = async function(candidatePassword) {
+    return bcrypt.compare(candidatePassword, this.password);
+};
+
+userSchema.methods.changePassword = async function(newPassword) {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(newPassword, salt);
+    await this.save();
+};
+
+module.exports = mongoose.model('User', userSchema);

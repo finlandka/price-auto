@@ -1,20 +1,18 @@
 const nodemailer = require('nodemailer');
 const { body, validationResult } = require('express-validator');
-const axios = require('axios');
+//const axios = require('axios');
 
-// Настройка транспорта для отправки email
 const transporter = nodemailer.createTransport({
-    host: 'your-smtp-host',
-    port: 587,
-    secure: false,
+    host: 'smtp.yandex.ru',
+    port: 465,
+    secure: true,
     auth: {
-        user: 'your-email@example.com',
-        pass: 'your-email-password'
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
     }
 });
 
-// Валидация данных
-exports.validateOrder = [
+const orderValidationRules = [
     body('name').trim().isLength({ min: 2 }).withMessage('Имя должно содержать минимум 2 символа'),
     body('email').isEmail().withMessage('Введите корректный email'),
     body('phone').isMobilePhone('any').withMessage('Введите корректный номер телефона'),
@@ -22,61 +20,62 @@ exports.validateOrder = [
     body('total').isNumeric().withMessage('Некорректная сумма заказа')
 ];
 
-// Обработка заказа
-exports.submitOrder = async (req, res) => {
-    // Проверка результатов валидации
+const formatItemsList = (items) => items.map(item =>
+    `${item[0]} - ${item[1]} - ${item[2]} - Количество: ${item.quantity} - Цена: ${item[4]} - Сумма: ${item[4] * item.quantity}`
+).join('\n');
+
+const createMailOptions = (name, email, phone, itemsList, total) => ({
+    from: '"ООО АСТРА" <finlandka@yandex.ru>',
+    to: process.env.ADMIN_EMAIL,
+    subject: 'Новый заказ',
+    text: `
+        Новый заказ от ${name}
+        Email: ${email}
+        Телефон: ${phone}
+        
+        Заказанные товары:
+        ${itemsList}
+        
+        Общая сумма: ${total}
+    `
+});
+
+const submitOrder = async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, email, phone, items, total, captchaToken } = req.body;
+    const { name, email, phone, items, total, /*recaptchaToken*/ } = req.body;
 
-    // Проверка hCaptcha
-    try {
-        const verificationResponse = await axios.post(
-            'https://hcaptcha.com/siteverify',
-            `response=${captchaToken}&secret=YOUR_HCAPTCHA_SECRET_KEY`,
-            {
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                }
-            }
+    // Проверка reCAPTCHA
+    /*try {
+        const recaptchaResponse = await axios.post(
+            `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${recaptchaToken}`
         );
 
-        if (!verificationResponse.data.success) {
-            return res.status(400).json({ message: 'hCaptcha verification failed' });
+        if (!recaptchaResponse.data.success) {
+            return res.status(400).json({ message: 'reCAPTCHA verification failed' });
         }
     } catch (error) {
-        console.error('hCaptcha verification error:', error);
-        return res.status(500).json({ message: 'Error verifying hCaptcha' });
-    }
+        console.error('Error verifying reCAPTCHA:', error);
+        return res.status(500).json({ message: 'Error verifying reCAPTCHA' });
+    }*/
 
-    const itemsList = items.map(item =>
-        `${item[0]} - ${item[1]} - ${item[2]} - Количество: ${item.quantity} - Цена: ${item[4]} - Сумма: ${item[4] * item.quantity}`
-    ).join('\n');
-
-    const mailOptions = {
-        from: '"Your Store" <your-email@example.com>',
-        to: 'admin@example.com', // email админа
-        subject: 'Новый заказ',
-        text: `
-            Новый заказ от ${name}
-            Email: ${email}
-            Телефон: ${phone}
-            
-            Заказанные товары:
-            ${itemsList}
-            
-            Общая сумма: ${total}
-        `
-    };
+    const itemsList = formatItemsList(items);
+    const mailOptions = createMailOptions(name, email, phone, itemsList, total);
 
     try {
         await transporter.sendMail(mailOptions);
+        console.log(`Успешный заказ от ${name} (${email}) на сумму ${total}`);
         res.status(200).json({ message: 'Order submitted successfully' });
     } catch (error) {
         console.error('Error sending email:', error);
-        res.status(500).json({ message: 'Error submitting order' });
+        res.status(500).json({ message: 'Error submitting order', error: error.message });
     }
+};
+
+module.exports = {
+    validateOrder: orderValidationRules,
+    submitOrder
 };

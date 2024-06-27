@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import { Form, Button, Table, Container, Row, Col, Alert } from 'react-bootstrap';
 import axios from 'axios';
 
-function ExcelReader( {onPriceListAdded} ) {
+function ExcelReader({ onPriceListAdded }) {
     const [data, setData] = useState([]);
     const [fileName, setFileName] = useState('');
     const [priceListName, setPriceListName] = useState('');
     const [alert, setAlert] = useState({ show: false, variant: '', message: '' });
 
-    const handleFileUpload = (e) => {
+    const handleFileUpload = useCallback((e) => {
         const file = e.target.files[0];
         setFileName(file.name);
         const reader = new FileReader();
@@ -24,9 +24,9 @@ function ExcelReader( {onPriceListAdded} ) {
         };
 
         reader.readAsBinaryString(file);
-    };
+    }, []);
 
-    const saveToMongo = async () => {
+    const saveToMongo = useCallback(async () => {
         if (!priceListName.trim()) {
             showAlert('danger', 'Пожалуйста, введите название прайс-листа');
             return;
@@ -39,21 +39,21 @@ function ExcelReader( {onPriceListAdded} ) {
                 priceListName
             });
             showAlert('success', response.data.message);
-            // Очистка формы после успешного сохранения
             setData([]);
             setFileName('');
             setPriceListName('');
-
             onPriceListAdded();
         } catch (error) {
             showAlert('danger', 'Ошибка при сохранении данных');
         }
-    };
+    }, [data, fileName, priceListName, onPriceListAdded]);
 
-    const showAlert = (variant, message) => {
+    const showAlert = useCallback((variant, message) => {
         setAlert({ show: true, variant, message });
         setTimeout(() => setAlert({ show: false, variant: '', message: '' }), 3000);
-    };
+    }, []);
+
+    const previewData = useMemo(() => data.slice(0, 5), [data]);
 
     return (
         <Container className="mt-5">
@@ -88,12 +88,12 @@ function ExcelReader( {onPriceListAdded} ) {
                     )}
                 </Col>
             </Row>
-            {data.length > 0 && (
+            {previewData.length > 0 && (
                 <Row className="mt-3">
                     <Col>
                         <Table striped hover>
                             <tbody>
-                            {data.slice(0, 5).map((row, index) => (
+                            {previewData.map((row, index) => (
                                 <tr key={index}>
                                     {row.map((cell, cellIndex) => (
                                         <td key={cellIndex}>{cell}</td>

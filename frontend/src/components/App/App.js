@@ -1,17 +1,12 @@
 import './App.css';
-import React, {useEffect, useState, useCallback} from "react";
-import {Routes, Route, useNavigate} from "react-router-dom";
-import Button from 'react-bootstrap/Button';
-import Tab from 'react-bootstrap/Tab';
-import Tabs from 'react-bootstrap/Tabs';
-
+import React, { useEffect, useState, useCallback, useMemo } from "react";
+import { Routes, Route, useNavigate } from "react-router-dom";
+import { Button, Tab, Tabs } from 'react-bootstrap';
 import * as MainApi from "../../mainApi";
-
-import {CurrentUserContext} from '../../context/CurrentUserContext';
-import {LoggedInContext} from '../../context/LoggedInContext';
+import { CurrentUserContext } from '../../context/CurrentUserContext';
+import { LoggedInContext } from '../../context/LoggedInContext';
 import ProtectedAuthRouteElement from '../ProtectedAuthRoute/ProtectedAuthRoute';
 import ProtectedRouteElement from '../ProtectedRoute/ProtectedRoute';
-
 import Header from '../Header/Header';
 import Search from '../Search/Search';
 import Products from "../Products/Products";
@@ -26,7 +21,6 @@ function App() {
     const [loginError, setLoginError] = useState('');
     const [currentUser, setCurrentUser] = useState({});
     const [loggedIn, setLoggedIn] = useState(false);
-    const [error, setError] = useState(null);
     const [searchResults, setSearchResults] = useState([]);
     const [cart, setCart] = useState(() => {
         const savedCart = localStorage.getItem('cart');
@@ -34,15 +28,15 @@ function App() {
     });
     const [showCart, setShowCart] = useState(false);
 
-    const mainApi = new MainApi({baseUrl: 'http://localhost:3000'})
+    const mainApi = useMemo(() => new MainApi({baseUrl: 'http://localhost:3000'}), []);
 
-    const resetLoginError = React.useCallback(() => {
+    const resetLoginError = useCallback(() => {
         setLoginError('');
     }, []);
 
     useEffect(() => {
-        if (localStorage.getItem("token")) {
-            const token = localStorage.getItem("token");
+        const token = localStorage.getItem("token");
+        if (token) {
             const savedUser = JSON.parse(localStorage.getItem("currentUser"));
             mainApi.getToken(token)
                 .then((result) => {
@@ -50,18 +44,19 @@ function App() {
                         setLoggedIn(true);
                         setCurrentUser(savedUser);
                     }
-                    setLoading(false);
                 })
-                .catch(() => {
-                    setError(error);
-                    setLoading(false);
-                });
+                .catch(error => console.error('An error occurred:', error))
+                .finally(() => setLoading(false));
         } else {
             setLoading(false);
         }
-    }, []);
+    }, [mainApi]);
 
-    function onLogin(email, password) {
+    useEffect(() => {
+        localStorage.setItem('cart', JSON.stringify(cart));
+    }, [cart]);
+
+    const onLogin = useCallback((email, password) => {
         return mainApi.authorization(email, password)
             .then((result) => {
                 setLoggedIn(true);
@@ -69,36 +64,30 @@ function App() {
                 getUser();
                 navigate("/admin", { replace: true });
             })
-            .catch(error => {
-                setLoginError(error);
-            });
-    }
+            .catch(setLoginError);
+    }, [mainApi, navigate]);
 
-    function onLogout() {
+    const onLogout = useCallback(() => {
         setLoggedIn(false);
         setCurrentUser({});
         setLoginError('');
         localStorage.clear();
-    }
+    }, []);
 
-    function getUser() {
+    const getUser = useCallback(() => {
         mainApi.getUserInfo()
             .then((result) => {
                 setCurrentUser(result);
                 localStorage.setItem('currentUser', JSON.stringify(result));
             })
-            .catch(() => setError(error));
-    }
+            .catch(error => console.error('An error occurred:', error));
+    }, [mainApi]);
 
     const handleSearchResult = useCallback((results) => {
         setSearchResults(results);
     }, []);
 
-    useEffect(() => {
-        localStorage.setItem('cart', JSON.stringify(cart));
-    }, [cart]);
-
-    const addToCart = (product) => {
+    const addToCart = useCallback((product) => {
         setCart(prevCart => {
             const existingProduct = prevCart.find(item => item[1] === product[1]);
             if (existingProduct) {
@@ -111,27 +100,33 @@ function App() {
                 return [...prevCart, {...product, quantity: product.quantity || 1}];
             }
         });
-    };
+    }, []);
 
-    const removeFromCart = (index) => {
+    const removeFromCart = useCallback((index) => {
         setCart(prevCart => prevCart.filter((_, i) => i !== index));
-    };
+    }, []);
 
-    const updateCartItemQuantity = (index, newQuantity) => {
+    const clearCart = useCallback(() => {
+        setCart([]);
+    }, []);
+
+    const updateCartItemQuantity = useCallback((index, newQuantity) => {
         setCart(prevCart =>
             prevCart.map((item, i) =>
                 i === index ? {...item, quantity: newQuantity} : item
             )
         );
-    };
+    }, []);
 
-    const toggleCart = () => {
-        setShowCart(!showCart);
-    };
+    const toggleCart = useCallback(() => {
+        setShowCart(prev => !prev);
+    }, []);
+
+    const contextValue = useMemo(() => ({ loggedIn, loading }), [loggedIn, loading]);
 
     return (
         <CurrentUserContext.Provider value={currentUser}>
-            <LoggedInContext.Provider value={{ loggedIn, loading }}>
+            <LoggedInContext.Provider value={contextValue}>
                 <div className="page">
                     <Header />
                     <div className="d-flex justify-content-end mb-3">
@@ -147,32 +142,41 @@ function App() {
                                     cartItems={cart}
                                     removeFromCart={removeFromCart}
                                     updateCartItemQuantity={updateCartItemQuantity}
+                                    clearCart={clearCart}
                                 />
                             ) : (
-                                <>
-                                    <Tabs defaultActiveKey="search" className="mb-3">
-                                        <Tab eventKey="search" title="Поиск">
-                                            <Search onSearchResult={handleSearchResult} />
-                                            <Products searchResults={searchResults} addToCart={addToCart} cart={cart} />
-                                        </Tab>
-                                        <Tab eventKey="all-price-lists" title="Все прайс-листы">
-                                            <PriceListsView loggedIn={loggedIn} />
-                                        </Tab>
-                                    </Tabs>
-                                </>
+                                <Tabs defaultActiveKey="search" className="mb-3">
+                                    <Tab eventKey="search" title="Поиск">
+                                        <Search onSearchResult={handleSearchResult} />
+                                        <Products searchResults={searchResults} addToCart={addToCart} cart={cart} />
+                                    </Tab>
+                                    <Tab eventKey="all-price-lists" title="Все прайс-листы">
+                                        <PriceListsView loggedIn={loggedIn} />
+                                    </Tab>
+                                </Tabs>
                             )
                         }/>
-                        <Route path="/login"
-                               element={<ProtectedAuthRouteElement element={<Login onLogin={onLogin} loginError={loginError} resetLoginError={resetLoginError}/>}
-                               />}/>
-                        <Route path="/admin" element={<ProtectedRouteElement
-                            element={<Admin onLogout={onLogout} loggedIn={loggedIn} />}/>}/>
+                        <Route path="/login" element={
+                            <ProtectedAuthRouteElement
+                                element={
+                                    <Login
+                                        onLogin={onLogin}
+                                        loginError={loginError}
+                                        resetLoginError={resetLoginError}
+                                    />
+                                }
+                            />
+                        }/>
+                        <Route path="/admin" element={
+                            <ProtectedRouteElement
+                                element={<Admin onLogout={onLogout} loggedIn={loggedIn} />}
+                            />
+                        }/>
                     </Routes>
-
                 </div>
             </LoggedInContext.Provider>
         </CurrentUserContext.Provider>
-    )
+    );
 }
 
 export default App;

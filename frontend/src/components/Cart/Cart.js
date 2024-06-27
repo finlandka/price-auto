@@ -1,52 +1,47 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Table, Button, Form, Modal, Alert } from 'react-bootstrap';
-import HCaptcha from '@hcaptcha/react-hcaptcha';
+//import ReCAPTCHA from "react-google-recaptcha";
 
-function Cart({ cartItems, removeFromCart, updateCartItemQuantity }) {
+function Cart({ cartItems, removeFromCart, updateCartItemQuantity, clearCart }) {
     const [showModal, setShowModal] = useState(false);
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [phone, setPhone] = useState('');
-    const [captchaToken, setCaptchaToken] = useState(null);
-    const captchaRef = useRef(null);
+    const [formData, setFormData] = useState({ name: '', email: '', phone: '' });
     const [alert, setAlert] = useState({ show: false, variant: '', message: '' });
+    //const recaptchaRef = useRef();
 
-    const total = cartItems.reduce((sum, item) => sum + item[4] * item.quantity, 0);
+    const total = useMemo(() => cartItems.reduce((sum, item) => sum + item[4] * item.quantity, 0), [cartItems]);
 
-    const handleQuantityChange = (index, newQuantity) => {
+    const handleQuantityChange = useCallback((index, newQuantity) => {
         if (newQuantity > 0) {
             updateCartItemQuantity(index, newQuantity);
         }
-    };
+    }, [updateCartItemQuantity]);
 
-    const handleVerificationSuccess = (token) => {
-        setCaptchaToken(token);
-    };
+    const handleInputChange = useCallback((e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    }, []);
 
-    const handleSubmitOrder = async (e) => {
+    const handleSubmitOrder = useCallback(async (e) => {
         e.preventDefault();
         setAlert({ show: false, variant: '', message: '' });
 
-        if (!captchaToken) {
-            setAlert({ show: true, variant: 'danger', message: 'Пожалуйста, подтвердите, что вы не робот' });
+        /*const recaptchaValue = recaptchaRef.current.getValue();
+        if (!recaptchaValue) {
+            setAlert({ show: true, variant: 'danger', message: 'Пожалуйста, пройдите проверку reCAPTCHA' });
             return;
-        }
+        }*/
 
         const orderData = {
-            name,
-            email,
-            phone,
+            ...formData,
             items: cartItems,
             total,
-            captchaToken
+            //recaptchaToken: recaptchaValue
         };
 
         try {
             const response = await fetch('/api/submit-order', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(orderData),
             });
 
@@ -54,25 +49,45 @@ function Cart({ cartItems, removeFromCart, updateCartItemQuantity }) {
 
             if (response.ok) {
                 setAlert({ show: true, variant: 'success', message: 'Заказ успешно оформлен! Мы свяжемся с вами в ближайшее время.' });
-                // Очистить корзину после успешного заказа
-                cartItems.forEach((_, index) => removeFromCart(index));
+                clearCart();
                 setShowModal(false);
             } else {
-                if (data.errors) {
-                    // Обработка ошибок валидации
-                    const errorMessages = data.errors.map(err => err.msg).join(', ');
-                    setAlert({ show: true, variant: 'danger', message: errorMessages });
-                } else {
-                    setAlert({ show: true, variant: 'danger', message: data.message || 'Произошла ошибка при оформлении заказа' });
-                }
+                const errorMessage = data.errors
+                    ? data.errors.map(err => err.msg).join(', ')
+                    : data.message || 'Произошла ошибка при оформлении заказа';
+                setAlert({ show: true, variant: 'danger', message: errorMessage });
             }
         } catch (error) {
             console.error('Error submitting order:', error);
             setAlert({ show: true, variant: 'danger', message: 'Произошла ошибка при отправке заказа. Пожалуйста, попробуйте еще раз.' });
-        }
-        captchaRef.current.resetCaptcha();
-        setCaptchaToken(null);
-    };
+        } /*finally {
+            //recaptchaRef.current.reset();
+        }*/
+    }, [formData, cartItems, total, clearCart]);
+
+    const renderTableRow = useCallback((item, index) => (
+        <tr key={index}>
+            <td>{item[0]}</td>
+            <td>{item[1]}</td>
+            <td>{item[2]}</td>
+            <td>
+                <Form.Control
+                    type="number"
+                    min="1"
+                    value={item.quantity}
+                    onChange={(e) => handleQuantityChange(index, parseInt(e.target.value))}
+                    style={{ width: '70px' }}
+                />
+            </td>
+            <td>{item[4]}</td>
+            <td>{item[4] * item.quantity} &#8381;</td>
+            <td>
+                <Button variant="danger" onClick={() => removeFromCart(index)}>
+                    Удалить
+                </Button>
+            </td>
+        </tr>
+    ), [handleQuantityChange, removeFromCart]);
 
     return (
         <div>
@@ -90,32 +105,10 @@ function Cart({ cartItems, removeFromCart, updateCartItemQuantity }) {
                 </tr>
                 </thead>
                 <tbody>
-                {cartItems.map((item, index) => (
-                    <tr key={index}>
-                        <td>{item[0]}</td>
-                        <td>{item[1]}</td>
-                        <td>{item[2]}</td>
-                        <td>
-                            <Form.Control
-                                type="number"
-                                min="1"
-                                value={item.quantity}
-                                onChange={(e) => handleQuantityChange(index, parseInt(e.target.value))}
-                                style={{ width: '70px' }}
-                            />
-                        </td>
-                        <td>{item[4]}</td>
-                        <td>{item[4] * item.quantity}</td>
-                        <td>
-                            <Button variant="danger" onClick={() => removeFromCart(index)}>
-                                Удалить
-                            </Button>
-                        </td>
-                    </tr>
-                ))}
+                {cartItems.map(renderTableRow)}
                 </tbody>
             </Table>
-            <h3 className='mb-4'>Итого: {total}</h3>
+            <h3 className='mb-4'>Итого: {total} &#8381;</h3>
             <Button variant="primary" onClick={() => setShowModal(true)}>
                 Оформить заказ
             </Button>
@@ -126,46 +119,29 @@ function Cart({ cartItems, removeFromCart, updateCartItemQuantity }) {
                 </Modal.Header>
                 <Modal.Body>
                     {alert.show && (
-                        <Alert variant={alert.variant} onClose={() => setAlert({ ...alert, show: false })} dismissible>
+                        <Alert variant={alert.variant} onClose={() => setAlert(prev => ({ ...prev, show: false }))} dismissible>
                             {alert.message}
                         </Alert>
                     )}
                     <Form onSubmit={handleSubmitOrder}>
-                        <Form.Group className='mb-2'>
-                            <Form.Label>Имя</Form.Label>
-                            <Form.Control
-                                type="text"
-                                required
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                            />
-                        </Form.Group>
-                        <Form.Group className='mb-2'>
-                            <Form.Label>Email</Form.Label>
-                            <Form.Control
-                                type="email"
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
-                        </Form.Group>
-                        <Form.Group className='mb-4'>
-                            <Form.Label>Телефон</Form.Label>
-                            <Form.Control
-                                type="tel"
-                                required
-                                value={phone}
-                                onChange={(e) => setPhone(e.target.value)}
-                            />
-                        </Form.Group>
-                        <Form.Group className='mb-4'>
-                            <HCaptcha
-                                sitekey="acc4d9d0-0a36-492c-914a-1cd6f6b47c7e"
-                                onVerify={handleVerificationSuccess}
-                                ref={captchaRef}
-                            />
-                        </Form.Group>
-                        <Form.Group>
+                        {['name', 'email', 'phone'].map((field) => (
+                            <Form.Group key={field} className='mb-2'>
+                                <Form.Label>{field.charAt(0).toUpperCase() + field.slice(1)}</Form.Label>
+                                <Form.Control
+                                    type={field === 'email' ? 'email' : field === 'phone' ? 'tel' : 'text'}
+                                    name={field}
+                                    required
+                                    value={formData[field]}
+                                    onChange={handleInputChange}
+                                />
+                            </Form.Group>
+                        ))}
+                        {/*<ReCAPTCHA
+                            ref={recaptchaRef}
+                            sitekey="YOUR_RECAPTCHA_SITE_KEY"
+                            className="mb-3"
+                        />*/}
+                        <Form.Group className='mt-4'>
                             <Button variant="primary" type="submit">
                                 Подтвердить заказ
                             </Button>
@@ -175,7 +151,7 @@ function Cart({ cartItems, removeFromCart, updateCartItemQuantity }) {
             </Modal>
 
             {alert.show && !showModal && (
-                <Alert variant={alert.variant} className="mt-3" onClose={() => setAlert({ ...alert, show: false })} dismissible>
+                <Alert variant={alert.variant} className="mt-3" onClose={() => setAlert(prev => ({ ...prev, show: false }))} dismissible>
                     {alert.message}
                 </Alert>
             )}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Table, Button, Alert, Modal } from 'react-bootstrap';
 
@@ -8,17 +8,7 @@ function PriceListsView({ loggedIn, shouldRefetch, setShouldRefetch }) {
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [deleteId, setDeleteId] = useState(null);
 
-    useEffect(() => {
-        fetchPriceLists();
-    }, []);
-
-    useEffect(() => {
-        if (shouldRefetch) {
-            fetchPriceLists();
-        }
-    }, [shouldRefetch]);
-
-    const fetchPriceLists = async () => {
+    const fetchPriceLists = useCallback(async () => {
         try {
             const response = await axios.get('/api/priceLists');
             setPriceLists(response.data);
@@ -29,14 +19,24 @@ function PriceListsView({ loggedIn, shouldRefetch, setShouldRefetch }) {
             console.error('Error fetching price lists:', error);
             showAlert('danger', 'Ошибка при загрузке прайс-листов');
         }
-    };
+    }, [setShouldRefetch]);
 
-    const handleDelete = (id) => {
+    useEffect(() => {
+        fetchPriceLists();
+    }, [fetchPriceLists]);
+
+    useEffect(() => {
+        if (shouldRefetch) {
+            fetchPriceLists();
+        }
+    }, [shouldRefetch, fetchPriceLists]);
+
+    const handleDelete = useCallback((id) => {
         setDeleteId(id);
         setShowConfirmModal(true);
-    };
+    }, []);
 
-    const confirmDelete = async () => {
+    const confirmDelete = useCallback(async () => {
         try {
             await axios.delete(`/api/priceLists/${deleteId}`);
             fetchPriceLists();
@@ -46,9 +46,9 @@ function PriceListsView({ loggedIn, shouldRefetch, setShouldRefetch }) {
             showAlert('danger', 'Ошибка при удалении прайс-листа');
         }
         setShowConfirmModal(false);
-    };
+    }, [deleteId, fetchPriceLists]);
 
-    const handleDownload = async (id, fileName) => {
+    const handleDownload = useCallback(async (id, fileName) => {
         try {
             const response = await axios.get(`/api/priceLists/${id}/download`, {
                 responseType: 'blob',
@@ -65,12 +65,12 @@ function PriceListsView({ loggedIn, shouldRefetch, setShouldRefetch }) {
             console.error('Ошибка:', error);
             showAlert('danger', 'Ошибка при скачивании файла');
         }
-    };
+    }, []);
 
-    const showAlert = (variant, message) => {
+    const showAlert = useCallback((variant, message) => {
         setAlert({ show: true, variant, message });
         setTimeout(() => setAlert({ show: false, variant: '', message: '' }), 3000);
-    };
+    }, []);
 
     return (
         <>
@@ -91,14 +91,13 @@ function PriceListsView({ loggedIn, shouldRefetch, setShouldRefetch }) {
                     <tr key={priceList._id}>
                         <td>{priceList.name}</td>
                         <td>
-                            <Button variant="primary" className='mb-1' size="sm" onClick={() => handleDownload(priceList._id, priceList.fileName)}>
+                            <Button variant="primary" className="mb-1 me-1" size="sm" onClick={() => handleDownload(priceList._id, priceList.fileName)}>
                                 Скачать
                             </Button>
-                            {(' ')}
                             {loggedIn && (
-                            <Button variant="danger" size="sm" className='mb-1' onClick={() => handleDelete(priceList._id)}>
-                                Удалить
-                            </Button>
+                                <Button variant="danger" size="sm" className="mb-1" onClick={() => handleDelete(priceList._id)}>
+                                    Удалить
+                                </Button>
                             )}
                         </td>
                     </tr>

@@ -1,8 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import Form from 'react-bootstrap/Form';
-import InputGroup from 'react-bootstrap/InputGroup';
-import Button from 'react-bootstrap/Button';
+import { Form, InputGroup, Button } from 'react-bootstrap';
 import axios from 'axios';
 
 const API_URL = 'http://localhost:3000/api/searchProduct';
@@ -47,9 +45,14 @@ function Search({ onSearchResult }) {
                     value={searchQuery}
                     onChange={handleChange}
                     onKeyDown={handleKeyDown}
+                    aria-label="Поиск продукта"
                 />
-                <Button variant="primary" onClick={handleSearch}>Найти</Button>
-                <Button variant="secondary" onClick={handleClear}>✘</Button>
+                <Button variant="primary" onClick={handleSearch}>
+                    Найти
+                </Button>
+                <Button variant="secondary" onClick={handleClear} aria-label="Очистить поиск">
+                    ✘
+                </Button>
             </InputGroup>
         </section>
     );
