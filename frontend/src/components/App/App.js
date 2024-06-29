@@ -28,7 +28,7 @@ function App() {
     });
     const [showCart, setShowCart] = useState(false);
 
-    const mainApi = useMemo(() => new MainApi({baseUrl: 'http://localhost:3000'}), []);
+    const mainApi = useMemo(() => new MainApi({baseUrl: process.env.REACT_APP_URL}), []);
 
     const resetLoginError = useCallback(() => {
         setLoginError('');

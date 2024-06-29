@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Form, InputGroup, Button } from 'react-bootstrap';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3000/api/searchProduct';
+const API_URL = `${process.env.REACT_APP_URL}/api/searchProduct`;
 
 function Search({ onSearchResult }) {
     const [searchQuery, setSearchQuery] = useState('');
