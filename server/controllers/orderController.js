@@ -4,7 +4,7 @@ const { body, validationResult } = require('express-validator');
 
 const transporter = nodemailer.createTransport({
     host: 'smtp.jino.ru',
-    port: 465,
+    port: 587,
     secure: true,
     auth: {
         user: process.env.EMAIL_USER,
