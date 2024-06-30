@@ -23,6 +23,8 @@ mongoose.connect(DB_URL)
 app.use(helmet.contentSecurityPolicy({
     directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        "default-src": ["'self'"],
+        "frame-src": ["'self'", "https://www.google.com", "https://www.gstatic.com"],
         "script-src": ["'self'", "https://www.google.com", "https://www.gstatic.com"],
     },
 }));
