@@ -124,17 +124,36 @@ function Cart({ cartItems, removeFromCart, updateCartItemQuantity, clearCart }) 
                         </Alert>
                     )}
                     <Form onSubmit={handleSubmitOrder}>
-                        {['name', 'email', 'phone'].map((field) => (
-                            <Form.Group key={field} className='mb-2'>
-                                <Form.Label>{field.charAt(0).toUpperCase() + field.slice(1)}</Form.Label>
-                                <Form.Control
-                                    type={field === 'email' ? 'email' : field === 'phone' ? 'tel' : 'text'}
-                                    name={field}
-                                    required
-                                    value={formData[field]}
-                                    onChange={handleInputChange}
-                                />
-                            </Form.Group>
+                        <Form.Group className='mb-2'>
+                            <Form.Label>Имя</Form.Label>
+                            <Form.Control
+                                type="text"
+                                name="name"
+                                required
+                                value={formData.name}
+                                onChange={handleInputChange}
+                            />
+                        </Form.Group>
+                        <Form.Group className='mb-2'>
+                            <Form.Label>Электронная почта</Form.Label>
+                            <Form.Control
+                                type="email"
+                                name="email"
+                                required
+                                value={formData.email}
+                                onChange={handleInputChange}
+                            />
+                        </Form.Group>
+                        <Form.Group className='mb-2'>
+                            <Form.Label>Телефон</Form.Label>
+                            <Form.Control
+                                type="tel"
+                                name="phone"
+                                required
+                                value={formData.phone}
+                                onChange={handleInputChange}
+                            />
+                        </Form.Group>
                         ))}
                         {/*<ReCAPTCHA
                             ref={recaptchaRef}

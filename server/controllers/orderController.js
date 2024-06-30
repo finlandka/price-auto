@@ -9,6 +9,9 @@ const transporter = nodemailer.createTransport({
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
+    },
+    tls: {
+        rejectUnauthorized: false
     }
 });
 
@@ -66,7 +69,9 @@ const submitOrder = async (req, res) => {
     const mailOptions = createMailOptions(name, email, phone, itemsList, total);
 
     try {
-        await transporter.sendMail(mailOptions);
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Message sent: %s', info.messageId);
+        console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
         console.log(`Успешный заказ от ${name} (${email}) на сумму ${total}`);
         res.status(200).json({ message: 'Order submitted successfully' });
     } catch (error) {
