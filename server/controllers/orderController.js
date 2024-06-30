@@ -51,12 +51,25 @@ const submitOrder = async (req, res) => {
     // Проверка reCAPTCHA
     try {
         const recaptchaResponse = await axios.post(
-            `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${recaptchaToken}`
+            'https://www.google.com/recaptcha/api/siteverify',
+            null,
+            {
+                params: {
+                    secret: process.env.RECAPTCHA_SECRET_KEY,
+                    response: recaptchaToken
+                }
+            }
         );
 
         if (!recaptchaResponse.data.success) {
-            return res.status(400).json({ message: 'reCAPTCHA verification failed' });
+            return res.status(400).json({ message: 'reCAPTCHA verification failed', errors: recaptchaResponse.data['error-codes'] });
         }
+
+        // проверку score
+        if (recaptchaResponse.data.score < 0.5) {
+            return res.status(400).json({ message: 'reCAPTCHA score too low', score: recaptchaResponse.data.score });
+        }
+
     } catch (error) {
         console.error('Error verifying reCAPTCHA:', error);
         return res.status(500).json({ message: 'Error verifying reCAPTCHA' });
@@ -66,9 +79,7 @@ const submitOrder = async (req, res) => {
     const mailOptions = createMailOptions(name, email, phone, itemsList, total);
 
     try {
-        const info = await transporter.sendMail(mailOptions);
-        console.log('Message sent: %s', info.messageId);
-        console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+        await transporter.sendMail(mailOptions);
         console.log(`Успешный заказ от ${name} (${email}) на сумму ${total}`);
         res.status(200).json({ message: 'Order submitted successfully' });
     } catch (error) {
