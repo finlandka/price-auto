@@ -1,14 +1,33 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Table, Button, Form, Modal, Alert } from 'react-bootstrap';
-import ReCAPTCHA from "react-google-recaptcha";
 
 function Cart({ cartItems, removeFromCart, updateCartItemQuantity, clearCart }) {
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({ name: '', email: '', phone: '' });
     const [alert, setAlert] = useState({ show: false, variant: '', message: '' });
-    const recaptchaRef = useRef();
 
     const total = useMemo(() => cartItems.reduce((sum, item) => sum + item[4] * item.quantity, 0), [cartItems]);
+
+    useEffect(() => {
+        const loadReCaptcha = () => {
+            const script = document.createElement('script');
+            script.src = `https://www.google.com/recaptcha/api.js?render=6LcatAQqAAAAADfTVbo69-kAD-LLcvfYXnO6zS1x`;
+            script.async = true;
+            script.defer = true;
+            document.body.appendChild(script);
+        };
+        loadReCaptcha();
+    }, []);
+
+    const executeReCaptcha = useCallback(() => {
+        return new Promise((resolve) => {
+            window.grecaptcha.ready(() => {
+                window.grecaptcha.execute('6LcatAQqAAAAADfTVbo69-kAD-LLcvfYXnO6zS1x', { action: 'submit' }).then(token => {
+                    resolve(token);
+                });
+            });
+        });
+    }, []);
 
     const handleQuantityChange = useCallback((index, newQuantity) => {
         if (newQuantity > 0) {
@@ -25,17 +44,13 @@ function Cart({ cartItems, removeFromCart, updateCartItemQuantity, clearCart }) 
         e.preventDefault();
         setAlert({ show: false, variant: '', message: '' });
 
-        const recaptchaValue = recaptchaRef.current.getValue();
-        if (!recaptchaValue) {
-            setAlert({ show: true, variant: 'danger', message: 'Пожалуйста, пройдите проверку reCAPTCHA' });
-            return;
-        }
+        const recaptchaToken = await executeReCaptcha();
 
         const orderData = {
             ...formData,
             items: cartItems,
             total,
-            recaptchaToken: recaptchaValue
+            recaptchaToken
         };
 
         try {
@@ -60,10 +75,8 @@ function Cart({ cartItems, removeFromCart, updateCartItemQuantity, clearCart }) 
         } catch (error) {
             console.error('Error submitting order:', error);
             setAlert({ show: true, variant: 'danger', message: 'Произошла ошибка при отправке заказа. Пожалуйста, попробуйте еще раз.' });
-        } finally {
-            recaptchaRef.current.reset();
         }
-    }, [formData, cartItems, total, clearCart]);
+    }, [formData, cartItems, total, clearCart, executeReCaptcha]);
 
     const renderTableRow = useCallback((item, index) => (
         <tr key={index}>
@@ -154,11 +167,6 @@ function Cart({ cartItems, removeFromCart, updateCartItemQuantity, clearCart }) 
                                 onChange={handleInputChange}
                             />
                         </Form.Group>
-                        <ReCAPTCHA
-                            ref={recaptchaRef}
-                            sitekey="6LcatAQqAAAAADfTVbo69-kAD-LLcvfYXnO6zS1x"
-                            className="mb-3"
-                        />
                         <Form.Group className='mt-4'>
                             <Button variant="primary" type="submit">
                                 Подтвердить заказ
