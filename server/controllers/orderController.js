@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
 const { body, validationResult } = require('express-validator');
-//const axios = require('axios');
+const axios = require('axios');
 
 const transporter = nodemailer.createTransport({
     host: 'smtp.yandex.ru.',
@@ -46,10 +46,10 @@ const submitOrder = async (req, res) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
-    const { name, email, phone, items, total, /*recaptchaToken*/ } = req.body;
+    const { name, email, phone, items, total, recaptchaToken } = req.body;
 
     // Проверка reCAPTCHA
-    /*try {
+    try {
         const recaptchaResponse = await axios.post(
             `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${recaptchaToken}`
         );
@@ -60,7 +60,7 @@ const submitOrder = async (req, res) => {
     } catch (error) {
         console.error('Error verifying reCAPTCHA:', error);
         return res.status(500).json({ message: 'Error verifying reCAPTCHA' });
-    }*/
+    }
 
     const itemsList = formatItemsList(items);
     const mailOptions = createMailOptions(name, email, phone, itemsList, total);

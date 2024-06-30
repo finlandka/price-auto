@@ -1,12 +1,12 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { Table, Button, Form, Modal, Alert } from 'react-bootstrap';
-//import ReCAPTCHA from "react-google-recaptcha";
+import ReCAPTCHA from "react-google-recaptcha";
 
 function Cart({ cartItems, removeFromCart, updateCartItemQuantity, clearCart }) {
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({ name: '', email: '', phone: '' });
     const [alert, setAlert] = useState({ show: false, variant: '', message: '' });
-    //const recaptchaRef = useRef();
+    const recaptchaRef = useRef();
 
     const total = useMemo(() => cartItems.reduce((sum, item) => sum + item[4] * item.quantity, 0), [cartItems]);
 
@@ -25,17 +25,17 @@ function Cart({ cartItems, removeFromCart, updateCartItemQuantity, clearCart }) 
         e.preventDefault();
         setAlert({ show: false, variant: '', message: '' });
 
-        /*const recaptchaValue = recaptchaRef.current.getValue();
+        const recaptchaValue = recaptchaRef.current.getValue();
         if (!recaptchaValue) {
             setAlert({ show: true, variant: 'danger', message: 'Пожалуйста, пройдите проверку reCAPTCHA' });
             return;
-        }*/
+        }
 
         const orderData = {
             ...formData,
             items: cartItems,
             total,
-            //recaptchaToken: recaptchaValue
+            recaptchaToken: recaptchaValue
         };
 
         try {
@@ -60,9 +60,9 @@ function Cart({ cartItems, removeFromCart, updateCartItemQuantity, clearCart }) 
         } catch (error) {
             console.error('Error submitting order:', error);
             setAlert({ show: true, variant: 'danger', message: 'Произошла ошибка при отправке заказа. Пожалуйста, попробуйте еще раз.' });
-        } /*finally {
+        } finally {
             //recaptchaRef.current.reset();
-        }*/
+        }
     }, [formData, cartItems, total, clearCart]);
 
     const renderTableRow = useCallback((item, index) => (
@@ -155,11 +155,11 @@ function Cart({ cartItems, removeFromCart, updateCartItemQuantity, clearCart }) 
                             />
                         </Form.Group>
                         ))}
-                        {/*<ReCAPTCHA
+                        <ReCAPTCHA
                             ref={recaptchaRef}
-                            sitekey="YOUR_RECAPTCHA_SITE_KEY"
+                            sitekey="6LcatAQqAAAAADfTVbo69-kAD-LLcvfYXnO6zS1x"
                             className="mb-3"
-                        />*/}
+                        />
                         <Form.Group className='mt-4'>
                             <Button variant="primary" type="submit">
                                 Подтвердить заказ
