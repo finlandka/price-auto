@@ -25,7 +25,7 @@ const formatItemsList = (items) => items.map(item =>
 ).join('\n');
 
 const createMailOptions = (name, email, phone, itemsList, total) => ({
-    from: '"ООО АСТРА" <finlandka@yandex.ru>',
+    from: process.env.ADMIN_EMAIL,
     to: process.env.ADMIN_EMAIL,
     subject: 'Новый заказ',
     text: `
