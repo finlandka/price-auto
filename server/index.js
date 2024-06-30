@@ -20,7 +20,12 @@ mongoose.connect(DB_URL)
     .catch(err => console.error('MongoDB connection error:', err));
 
 // Middleware
-app.use(helmet());
+app.use(helmet.contentSecurityPolicy({
+    directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        "script-src": ["'self'", "https://www.google.com", "https://www.gstatic.com"],
+    },
+}));
 app.use(cors());
 app.use(compression());
 app.use(express.json({ limit: '10mb' }));
