@@ -2,3 +2,8 @@
     width: min-content;
     white-space: nowrap;
 }
+
+.table th {
+    font-family: sans-serif;
+    letter-spacing: 1pt;
+}

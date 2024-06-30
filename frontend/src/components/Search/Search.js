@@ -47,11 +47,11 @@ function Search({ onSearchResult }) {
                     onKeyDown={handleKeyDown}
                     aria-label="Поиск продукта"
                 />
-                <Button variant="primary" onClick={handleSearch}>
-                    Найти
-                </Button>
                 <Button variant="secondary" onClick={handleClear} aria-label="Очистить поиск">
                     ✘
+                </Button>
+                <Button variant="primary" onClick={handleSearch}>
+                    Найти
                 </Button>
             </InputGroup>
         </section>
