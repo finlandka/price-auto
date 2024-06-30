@@ -61,7 +61,7 @@ function Cart({ cartItems, removeFromCart, updateCartItemQuantity, clearCart }) 
             console.error('Error submitting order:', error);
             setAlert({ show: true, variant: 'danger', message: 'Произошла ошибка при отправке заказа. Пожалуйста, попробуйте еще раз.' });
         } finally {
-            //recaptchaRef.current.reset();
+            recaptchaRef.current.reset();
         }
     }, [formData, cartItems, total, clearCart]);
 
@@ -154,7 +154,6 @@ function Cart({ cartItems, removeFromCart, updateCartItemQuantity, clearCart }) 
                                 onChange={handleInputChange}
                             />
                         </Form.Group>
-                        ))}
                         <ReCAPTCHA
                             ref={recaptchaRef}
                             sitekey="6LcatAQqAAAAADfTVbo69-kAD-LLcvfYXnO6zS1x"
