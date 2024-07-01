@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon index.js"
+    "start": "nodemon index.js",
+    "testMail": "node ./test/mailTest.js"
   },
   "keywords": [],
   "author": "",

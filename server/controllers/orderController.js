@@ -25,7 +25,7 @@ const formatItemsList = (items) => items.map(item =>
 ).join('\n');
 
 const createMailOptions = (name, email, phone, itemsList, total) => ({
-    from: process.env.ADMIN_EMAIL,
+    from: '"ООО Астра Автозапчасти" <astra@auparts-spb.ru>',
     to: process.env.ADMIN_EMAIL,
     subject: 'Новый заказ',
     text: `
@@ -80,7 +80,7 @@ const submitOrder = async (req, res) => {
 
     try {
         await transporter.sendMail(mailOptions);
-        console.log(`Успешный заказ от ${name} (${email}) на сумму ${total}`);
+        console.log(`Успешный заказ от ${name} (${email}) на сумму ${total} ${process.env.ADMIN_EMAIL}, ${process.env.EMAIL_USER}, ${process.env.EMAIL_PASS}`);
         res.status(200).json({ message: 'Order submitted successfully' });
     } catch (error) {
         console.error('Error sending email:', error);
