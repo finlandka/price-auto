@@ -4,7 +4,7 @@ import './Products.css';
 import whatsappIcon from '../../images/whatsapp.png';
 import emailIcon from '../../images/mail.png';
 
-function Products({ searchResults, addToCart, cart }) {
+function Products({ searchResults, addToCart, removeFromCart, cart }) {
     const [quantities, setQuantities] = useState({});
     const [addedToCart, setAddedToCart] = useState({});
 
@@ -20,11 +20,18 @@ function Products({ searchResults, addToCart, cart }) {
         setQuantities(prev => ({ ...prev, [index]: value }));
     }, []);
 
-    const handleAddToCart = useCallback((product, index) => {
-        const quantity = quantities[index] || 1;
-        addToCart({ ...product, quantity: parseInt(quantity, 10) });
-        setAddedToCart(prev => ({ ...prev, [product[1]]: true }));
-    }, [quantities, addToCart]);
+    const handleToggleCart = useCallback((product, index) => {
+        if (addedToCart[product[1]]) {
+            // Удаление из корзины
+            removeFromCart(cart.findIndex(item => item[1] === product[1]));
+            setAddedToCart(prev => ({ ...prev, [product[1]]: false }));
+        } else {
+            // Добавление в корзину
+            const quantity = quantities[index] || 1;
+            addToCart({ ...product, quantity: parseInt(quantity, 10) });
+            setAddedToCart(prev => ({ ...prev, [product[1]]: true }));
+        }
+    }, [quantities, addToCart, removeFromCart, cart, addedToCart]);
 
     const renderTableCell = useCallback((content, center = true) => (
         <td>
@@ -53,14 +60,14 @@ function Products({ searchResults, addToCart, cart }) {
             {renderTableCell(
                 <Button
                     variant={addedToCart[product[1]] ? "success" : "primary"}
-                    onClick={() => handleAddToCart(product, index)}
-                    disabled={addedToCart[product[1]]}
+                    onClick={() => handleToggleCart(product, index)}
                 >
                     {addedToCart[product[1]] ? "✔" : "+"}
                 </Button>
             )}
         </tr>
-    ), [quantities, addedToCart, handleQuantityChange, handleAddToCart, renderTableCell]);
+    ), [quantities, addedToCart, handleQuantityChange, handleToggleCart, renderTableCell]);
+
 
     return (
         <section className='products'>
