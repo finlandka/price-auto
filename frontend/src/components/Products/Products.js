@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Button, Form } from 'react-bootstrap';
 import './Products.css';
-import whatsapp from '../../images/whatsapp.png';
+import whatsappIcon from '../../images/whatsapp.png';
+import emailIcon from '../../images/mail.png';
 
 function Products({ searchResults, addToCart, cart }) {
     const [quantities, setQuantities] = useState({});
@@ -82,7 +83,10 @@ function Products({ searchResults, addToCart, cart }) {
                     <tr>
                         <td colSpan="7">Ничего не нашли? Напишите нам на
                             <a href='https://wa.me/79062773427' target='_blank' rel="noopener noreferrer">
-                                <img src={whatsapp} alt='whatsapp' />
+                                <img src={whatsappIcon} alt='whatsapp' />
+                            </a> или на
+                            <a href='mailto:astra@auparts-spb.ru' target='_blank' rel="noopener noreferrer">
+                                <img src={emailIcon} alt='email' />
                             </a>
                         </td>
                     </tr>
