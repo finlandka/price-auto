@@ -25,7 +25,7 @@ const formatItemsList = (items) => items.map(item =>
 ).join('\n');
 
 const createMailOptions = (name, email, phone, itemsList, total) => ({
-    from: '"ООО Астра Автозапчасти" <astra@auparts-spb.ru>',
+    from: `"ООО Астра Автозапчасти" <${process.env.EMAIL_USER}>`,
     to: process.env.ADMIN_EMAIL,
     subject: 'Новый заказ',
     text: `
@@ -84,7 +84,7 @@ const submitOrder = async (req, res) => {
         res.status(200).json({ message: 'Order submitted successfully' });
     } catch (error) {
         console.error('Error sending email:', error);
-        res.status(500).json({ message: 'Error submitting order', error: error.message });
+        res.status(500).json({ message: 'Error submitting order', error: `${error.message}, ${process.env.ADMIN_EMAIL}, ${process.env.EMAIL_USER}, ${process.env.EMAIL_PASS}` });
     }
 };
 
