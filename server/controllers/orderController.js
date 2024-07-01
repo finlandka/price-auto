@@ -80,11 +80,11 @@ const submitOrder = async (req, res) => {
 
     try {
         await transporter.sendMail(mailOptions);
-        console.log(`Успешный заказ от ${name} (${email}) на сумму ${total} ${process.env.ADMIN_EMAIL}, ${process.env.EMAIL_USER}, ${process.env.EMAIL_PASS}`);
+        console.log(`Успешный заказ от ${name} (${email}) на сумму ${total}`);
         res.status(200).json({ message: 'Order submitted successfully' });
     } catch (error) {
         console.error('Error sending email:', error);
-        res.status(500).json({ message: 'Error submitting order', error: `${error.message}, ${process.env.ADMIN_EMAIL}, ${process.env.EMAIL_USER}, ${process.env.EMAIL_PASS}` });
+        res.status(500).json({ message: 'Error submitting order', error: error.message });
     }
 };
 
