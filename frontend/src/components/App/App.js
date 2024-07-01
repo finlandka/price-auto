@@ -148,7 +148,7 @@ function App() {
                                 <Tabs defaultActiveKey="search" className="mb-3">
                                     <Tab eventKey="search" title="Поиск">
                                         <Search onSearchResult={handleSearchResult} />
-                                        <Products searchResults={searchResults} addToCart={addToCart} cart={cart} />
+                                        <Products searchResults={searchResults} addToCart={addToCart} cart={cart} removeFromCart={removeFromCart} />
                                     </Tab>
                                     <Tab eventKey="all-price-lists" title="Все прайс-листы">
                                         <PriceListsView loggedIn={loggedIn} />
