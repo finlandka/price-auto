@@ -82,10 +82,10 @@ function Products({ searchResults, addToCart, cart }) {
                 ) : (
                     <tr>
                         <td colSpan="7">Ничего не нашли? Напишите нам на
-                            <a href='https://wa.me/79062773427' target='_blank' rel="noopener noreferrer">
+                             <a href='https://wa.me/79062773427' target='_blank' rel="noopener noreferrer">
                                 <img src={whatsappIcon} alt='whatsapp' />
                             </a> или на
-                            <a href='mailto:astra@auparts-spb.ru' target='_blank' rel="noopener noreferrer">
+                             <a href='mailto:astra@auparts-spb.ru' target='_blank' rel="noopener noreferrer">
                                 <img src={emailIcon} alt='email' />
                             </a>
                         </td>

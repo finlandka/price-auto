@@ -60,6 +60,9 @@ const searchProduct = async (req, res) => {
             return res.json({ products: [] });
         }
 
+        const queryWithoutDash = query.replace(/-/g, '');
+        const searchQuery = `${query} ${queryWithoutDash} article:${query} article:${queryWithoutDash}`;
+
         const allPriceLists = await ExcelData.find({});
         const allProducts = allPriceLists.flatMap(priceList => {
             if (!Array.isArray(priceList.data) || priceList.data.length === 0) {
@@ -68,7 +71,7 @@ const searchProduct = async (req, res) => {
             }
 
             const index = createIndex(priceList.data);
-            const searchResults = index.search(query);
+            const searchResults = index.search(searchQuery);
 
             return searchResults.map(result => ({
                 ...priceList.data[result.ref],
