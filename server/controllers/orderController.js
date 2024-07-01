@@ -20,11 +20,7 @@ const orderValidationRules = [
     body('total').isNumeric().withMessage('Некорректная сумма заказа')
 ];
 
-const formatItemsList = (items) => items.map(item =>
-    `${item[0]} - ${item[1]} - ${item[2]} - Количество: ${item.quantity} - Цена: ${item[4]} - Сумма: ${item[4] * item.quantity}`
-).join('\n');
-
-const createMailOptions = (name, email, phone, itemsList, total) => ({
+const createMailOptions = (name, email, phone, items, total) => ({
     from: `"ООО Астра Автозапчасти" <${process.env.EMAIL_USER}>`,
     to: process.env.ADMIN_EMAIL,
     subject: 'Новый заказ',
@@ -37,11 +33,28 @@ const createMailOptions = (name, email, phone, itemsList, total) => ({
                 <p><strong>Телефон:</strong> ${phone}</p>
                 
                 <h3 style="color: #0066cc;">Заказанные товары:</h3>
-                <ul style="list-style-type: none; padding-left: 0;">
-                    ${itemsList.map(item => `<li>${item.name} - ${item.quantity} шт. - ${item.price} руб.</li>`).join('')}
-                </ul>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr style="background-color: #f2f2f2;">
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Наименование</th>
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Артикул</th>
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Бренд</th>
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Количество</th>
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Цена</th>
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Сумма</th>
+                    </tr>
+                    ${items.map(item => `
+                        <tr>
+                            <td style="border: 1px solid #ddd; padding: 8px;">${item[0]}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">${item[1]}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px;">${item[2]}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${item.quantity}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${item[4]}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${item[4] * item.quantity}</td>
+                        </tr>
+                    `).join('')}
+                </table>
                 
-                <p style="font-size: 18px;"><strong>Общая сумма:</strong> ${total} руб.</p>
+                <p style="font-size: 18px; margin-top: 20px;"><strong>Общая сумма:</strong> ${total} руб.</p>
             </body>
         </html>
     `
@@ -82,8 +95,7 @@ const submitOrder = async (req, res) => {
         return res.status(500).json({ message: 'Error verifying reCAPTCHA' });
     }
 
-    const itemsList = formatItemsList(items);
-    const mailOptions = createMailOptions(name, email, phone, itemsList, total);
+    const mailOptions = createMailOptions(name, email, phone, items, total);
 
     try {
         await transporter.sendMail(mailOptions);
