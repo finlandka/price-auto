@@ -28,15 +28,22 @@ const createMailOptions = (name, email, phone, itemsList, total) => ({
     from: `"ООО Астра Автозапчасти" <${process.env.EMAIL_USER}>`,
     to: process.env.ADMIN_EMAIL,
     subject: 'Новый заказ',
-    text: `
-        Новый заказ от ${name}
-        Email: ${email}
-        Телефон: ${phone}
-        
-        Заказанные товары:
-        ${itemsList}
-        
-        Общая сумма: ${total}
+    html: `
+        <html lang="ru">
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <h2 style="color: #0066cc;">Новый заказ</h2>
+                <p><strong>Имя:</strong> ${name}</p>
+                <p><strong>Email:</strong> ${email}</p>
+                <p><strong>Телефон:</strong> ${phone}</p>
+                
+                <h3 style="color: #0066cc;">Заказанные товары:</h3>
+                <ul style="list-style-type: none; padding-left: 0;">
+                    ${itemsList.map(item => `<li>${item.name} - ${item.quantity} шт. - ${item.price} руб.</li>`).join('')}
+                </ul>
+                
+                <p style="font-size: 18px;"><strong>Общая сумма:</strong> ${total} руб.</p>
+            </body>
+        </html>
     `
 });
 
