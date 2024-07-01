@@ -8,9 +8,24 @@ function createIndex(documents) {
     return lunr(function() {
         this.use(lunr.multiLanguage('en', 'ru'));
         this.field('brand');
-        this.field('article');
+        this.field('article', { boost: 10 });
         this.field('name');
         this.ref('id');
+
+        // Добавляем пользовательский токенайзер
+        this.tokenizer = function(str) {
+            // Сначала применяем стандартный токенайзер
+            const standardTokens = lunr.tokenizer(str);
+
+            // Затем добавляем версию без дефисов для каждого токена
+            const additionalTokens = standardTokens.map(token => {
+                const tokenWithoutDash = token.toString().replace(/-/g, '');
+                return tokenWithoutDash !== token.toString() ? lunr.Token.fromString(tokenWithoutDash) : null;
+            }).filter(Boolean);
+
+            return [...standardTokens, ...additionalTokens];
+        };
+
 
         documents.forEach((doc, idx) => {
             this.add({
@@ -76,11 +91,13 @@ const searchProduct = async (req, res) => {
             return searchResults.map(result => ({
                 ...priceList.data[result.ref],
                 priceListName: priceList.name,
-                priceListId: priceList._id
+                priceListId: priceList._id,
+                score: result.score
             }));
         });
 
         if (allProducts.length > 0) {
+            allProducts.sort((a, b) => b.score - a.score);
             res.json({ products: allProducts });
         } else {
             res.status(404).json({ message: 'Не найдено' });
