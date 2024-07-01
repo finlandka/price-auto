@@ -81,11 +81,11 @@ function Products({ searchResults, addToCart, cart }) {
                     searchResults.map(renderProductRow)
                 ) : (
                     <tr>
-                        <td colSpan="7">Ничего не нашли? Напишите нам на
-                             <a href='https://wa.me/79062773427' target='_blank' rel="noopener noreferrer">
+                        <td colSpan="7">Ничего не нашли? Напишите нам:
+                            <a href='https://wa.me/79062773427' target='_blank' rel="noopener noreferrer" className="mx-1">
                                 <img src={whatsappIcon} alt='whatsapp' />
-                            </a> или на
-                             <a href='mailto:astra@auparts-spb.ru' target='_blank' rel="noopener noreferrer">
+                            </a>
+                            <a href='mailto:astra@auparts-spb.ru' target='_blank' rel="noopener noreferrer">
                                 <img src={emailIcon} alt='email' />
                             </a>
                         </td>
