@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Button, Form } from 'react-bootstrap';
 import './Products.css';
+import whatsapp from '../../images/whatsapp.png';
 
 function Products({ searchResults, addToCart, cart }) {
     const [quantities, setQuantities] = useState({});
@@ -79,7 +80,11 @@ function Products({ searchResults, addToCart, cart }) {
                     searchResults.map(renderProductRow)
                 ) : (
                     <tr>
-                        <td colSpan="7">Ничего не нашли? Напишите <a href='https://web.whatsapp.com/' target='_blank' rel="noopener noreferrer">нам</a></td>
+                        <td colSpan="7">Ничего не нашли? Напишите нам на
+                            <a href='https://wa.me/79062773427' target='_blank' rel="noopener noreferrer">
+                                <img src={whatsapp} alt='whatsapp' />
+                            </a>
+                        </td>
                     </tr>
                 )}
                 </tbody>
