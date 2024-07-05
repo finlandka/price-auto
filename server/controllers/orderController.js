@@ -35,9 +35,9 @@ const createMailOptions = (name, email, phone, items, total) => ({
                 <h3 style="color: #0066cc;">Заказанные товары:</h3>
                 <table style="width: 100%; border-collapse: collapse;">
                     <tr style="background-color: #f2f2f2;">
-                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Наименование</th>
-                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Артикул</th>
                         <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Бренд</th>
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Артикул</th>
+                        <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Наименование</th>
                         <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Количество</th>
                         <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Цена</th>
                         <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Сумма</th>

@@ -1,7 +1,7 @@
 import './App.css';
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
-import { Button, Tab, Tabs } from 'react-bootstrap';
+import { Button, Tab, Tabs, ListGroup } from 'react-bootstrap';
 import * as MainApi from "../../mainApi";
 import { CurrentUserContext } from '../../context/CurrentUserContext';
 import { LoggedInContext } from '../../context/LoggedInContext';
@@ -152,6 +152,15 @@ function App() {
                                     </Tab>
                                     <Tab eventKey="all-price-lists" title="Все прайс-листы">
                                         <PriceListsView loggedIn={loggedIn} />
+                                    </Tab>
+                                    <Tab eventKey="additional-services" title="Дополнительные услуги">
+                                        <ListGroup>
+                                            <ListGroup.Item>Автоподбор</ListGroup.Item>
+                                            <ListGroup.Item>Автострахование (в любой страховой компании)</ListGroup.Item>
+                                            <ListGroup.Item>Диагностическая карта</ListGroup.Item>
+                                            <ListGroup.Item>Привоз машин из-за рубежа</ListGroup.Item>
+                                            <ListGroup.Item>Эвакуатор</ListGroup.Item>
+                                        </ListGroup>
                                     </Tab>
                                 </Tabs>
                             )
