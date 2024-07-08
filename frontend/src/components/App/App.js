@@ -156,6 +156,7 @@ function App() {
                                     <Tab eventKey="additional-services" title="Дополнительные услуги">
                                         <ListGroup>
                                             <ListGroup.Item>Автоподбор</ListGroup.Item>
+                                            <ListGroup.Item>Вскрытие авто (техническая помощь)</ListGroup.Item>
                                             <ListGroup.Item>Автострахование (в любой страховой компании)</ListGroup.Item>
                                             <ListGroup.Item>Диагностическая карта</ListGroup.Item>
                                             <ListGroup.Item>Привоз машин из-за рубежа</ListGroup.Item>
